@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multimodal AI Video Engine</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background-color: #1e1e1e; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); text-align: center; max-width: 500px; width: 100%; }
+        input[type="text"] { width: 90%; padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #333; background-color: #2d2d2d; color: white; font-size: 16px; }
+        button { background-color: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        #status { margin-top: 20px; font-size: 14px; color: #aaaaaa; }
+        .loader { border: 4px solid #333; border-top: 4px solid #007bff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>AI Video Workflow Engine</h2>
+        <p>Paste a YouTube URL. The AI will analyze the video and physically extract the most engaging clips.</p>
+
+        <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+        <br>
+        <button id="submit-btn" onclick="processVideo()">Run Multimodal Extraction</button>
+
+        <div id="status-container" style="margin-top: 20px;">
+            <div class="loader" id="loader"></div>
+            <p id="status"></p>
+        </div>
+    </div>
+
+    <script>
+        async function processVideo() {
+            const urlInput = document.getElementById('youtube-url').value;
+            const btn = document.getElementById('submit-btn');
+            const status = document.getElementById('status');
+            const loader = document.getElementById('loader');
+
+            if (!urlInput) {
+                status.innerText = "Error: Please enter a valid URL.";
+                status.style.color = "#ff4d4d";
+                return;
+            }
+
+            // Lock the UI
+            btn.disabled = true;
+            loader.style.display = "block";
+            status.style.color = "#aaaaaa";
+            status.innerText = "Agent Deployed: Downloading, analyzing, and rendering. This will take a few minutes...";
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    status.style.color = "#00cc66";
+                    status.innerText = "Success: " + result.message;
+                } else {
+                    status.style.color = "#ff4d4d";
+                    status.innerText = "Error: " + result.error;
+                }
+            } catch (error) {
+                status.style.color = "#ff4d4d";
+                status.innerText = "Critical Error: Could not connect to the engine.";
+            } finally {
+                // Unlock the UI
+                btn.disabled = false;
+                loader.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
