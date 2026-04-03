@@ -8,6 +8,7 @@ ydl_opts = {
     'no_warnings': True,
     'extractor_args': {
         'youtube': ['player_client=android']
+    }
 }
 
 
