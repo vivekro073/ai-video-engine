@@ -6,6 +6,11 @@ from editor import render_clips
 import os
 
 
+if "YOUTUBE_COOKIES" in os.environ:
+    with open("cookies.txt", "w") as f:
+        f.write(os.environ["YOUTUBE_COOKIES"])
+
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
