@@ -1,10 +1,10 @@
 import os
 import base64
 import yt_dlp
+import traceback  # <--- Added to stop silent crashes
 
 
 def _setup_secure_cookies():
-    """Decodes the Base64 secret and writes the physical cookie file."""
     if "YOUTUBE_COOKIES" not in os.environ:
         print("DEBUG: CRITICAL ERROR - YOUTUBE_COOKIES secret not found!", flush=True)
         return
@@ -23,10 +23,9 @@ def _setup_secure_cookies():
 
 
 def download_video(youtube_url):
-    # 1. Guarantee the cookie file exists before starting
     _setup_secure_cookies()
 
-    # 2. Configure the hardened anti-bot options
+    # 100% clean options. No impersonation hacks.
     ydl_opts = {
         'format': 'b[ext=mp4]',
         'cookiefile': 'cookies.txt',
@@ -35,15 +34,15 @@ def download_video(youtube_url):
         'no_warnings': True,
         'extractor_args': {
             'youtube': ['player_client=android']
-        },
-        'impersonate': 'chrome110'  # <-- THE FIX: Added the exact version number
+        }
     }
 
-    # 3. Execute the download
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([youtube_url])
         return "downloaded_podcast.mp4"
     except Exception as e:
         print(f"DEBUG: Download failed: {e}", flush=True)
+        print("DEBUG: FULL TRACEBACK BELOW:", flush=True)
+        traceback.print_exc()  # <--- This will print the exact reason it crashed
         return None
