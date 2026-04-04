@@ -36,12 +36,24 @@
 
     <script>
         document.getElementById('upload-form').addEventListener('submit', async function(e) {
-            e.preventDefault(); // Prevents the browser from reloading the page
+            e.preventDefault();
 
             const fileInput = document.getElementById('video_file');
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('status');
             const loader = document.getElementById('loader');
+
+            // Create a container for our download buttons (if it doesn't exist)
+            let downloadContainer = document.getElementById('download-links');
+            if (!downloadContainer) {
+                downloadContainer = document.createElement('div');
+                downloadContainer.id = 'download-links';
+                downloadContainer.style.marginTop = '20px';
+                document.getElementById('status-container').appendChild(downloadContainer);
+            }
+
+            // Clear old buttons and reset status
+            downloadContainer.innerHTML = '';
 
             if (!fileInput.files.length) {
                 status.innerText = "Error: Please select a video file.";
@@ -49,19 +61,15 @@
                 return;
             }
 
-            // Lock the UI
             btn.disabled = true;
             loader.style.display = "block";
             status.style.color = "#aaaaaa";
             status.innerText = "Agent Deployed: Uploading, analyzing, and rendering. This will take a few minutes...";
 
-            // Package the file securely for transmission
             const formData = new FormData();
             formData.append('video_file', fileInput.files[0]);
 
             try {
-                // Notice we removed the 'Content-Type' header here.
-                // The browser automatically sets it for FormData.
                 const response = await fetch('/process', {
                     method: 'POST',
                     body: formData
@@ -72,6 +80,16 @@
                 if (response.ok) {
                     status.style.color = "#00cc66";
                     status.innerText = "Success: " + result.message;
+
+                    // --- THE FIX: Generate Download Buttons ---
+                    if (result.downloads && result.downloads.length > 0) {
+                        let html = "<h3>Download Your Clips:</h3>";
+                        result.downloads.forEach(dl => {
+                            html += `<a href="${dl.url}" target="_blank" style="display:inline-block; margin:5px; padding:10px 15px; background-color:#28a745; color:white; text-decoration:none; border-radius:5px;">📥 Download ${dl.name}</a><br>`;
+                        });
+                        downloadContainer.innerHTML = html;
+                    }
+
                 } else {
                     status.style.color = "#ff4d4d";
                     status.innerText = "Error: " + result.error;
@@ -80,7 +98,6 @@
                 status.style.color = "#ff4d4d";
                 status.innerText = "Critical Error: Could not connect to the engine.";
             } finally {
-                // Unlock the UI
                 btn.disabled = false;
                 loader.style.display = "none";
             }
