@@ -7,7 +7,7 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         .container { background-color: #1e1e1e; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); text-align: center; max-width: 500px; width: 100%; }
-        input[type="text"] { width: 90%; padding: 12px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #333; background-color: #2d2d2d; color: white; font-size: 16px; }
+        input[type="file"] { margin-bottom: 20px; font-size: 16px; }
         button { background-color: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background-color 0.3s; }
         button:hover { background-color: #0056b3; }
         button:disabled { background-color: #555; cursor: not-allowed; }
@@ -20,11 +20,13 @@
 
     <div class="container">
         <h2>AI Video Workflow Engine</h2>
-        <p>Paste a YouTube URL. The AI will analyze the video and physically extract the most engaging clips.</p>
-
-        <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
-        <br>
-        <button id="submit-btn" onclick="processVideo()">Run Multimodal Extraction</button>
+        <form id="upload-form" enctype="multipart/form-data">
+            <label for="video_file">Upload an MP4 Video for AI Processing:</label>
+            <br><br>
+            <input type="file" name="video_file" id="video_file" accept="video/mp4">
+            <br><br>
+            <button type="submit" id="submit-btn">Run AI Pipeline</button>
+        </form>
 
         <div id="status-container" style="margin-top: 20px;">
             <div class="loader" id="loader"></div>
@@ -33,14 +35,16 @@
     </div>
 
     <script>
-        async function processVideo() {
-            const urlInput = document.getElementById('youtube-url').value;
+        document.getElementById('upload-form').addEventListener('submit', async function(e) {
+            e.preventDefault(); // Prevents the browser from reloading the page
+
+            const fileInput = document.getElementById('video_file');
             const btn = document.getElementById('submit-btn');
             const status = document.getElementById('status');
             const loader = document.getElementById('loader');
 
-            if (!urlInput) {
-                status.innerText = "Error: Please enter a valid URL.";
+            if (!fileInput.files.length) {
+                status.innerText = "Error: Please select a video file.";
                 status.style.color = "#ff4d4d";
                 return;
             }
@@ -49,13 +53,18 @@
             btn.disabled = true;
             loader.style.display = "block";
             status.style.color = "#aaaaaa";
-            status.innerText = "Agent Deployed: Downloading, analyzing, and rendering. This will take a few minutes...";
+            status.innerText = "Agent Deployed: Uploading, analyzing, and rendering. This will take a few minutes...";
+
+            // Package the file securely for transmission
+            const formData = new FormData();
+            formData.append('video_file', fileInput.files[0]);
 
             try {
+                // Notice we removed the 'Content-Type' header here.
+                // The browser automatically sets it for FormData.
                 const response = await fetch('/process', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: urlInput })
+                    body: formData
                 });
 
                 const result = await response.json();
@@ -75,7 +84,7 @@
                 btn.disabled = false;
                 loader.style.display = "none";
             }
-        }
+        });
     </script>
 </body>
 </html>

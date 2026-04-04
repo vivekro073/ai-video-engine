@@ -1,6 +1,5 @@
 Flask
 gunicorn
 moviepy
-requests
 google-genai
 python-dotenv

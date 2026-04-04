@@ -1,9 +1,8 @@
-from flask import Flask, request, jsonify, render_template
-from youtube_fetcher import download_video
+from flask import Flask, request, render_template, jsonify
+import traceback
 from ingestion import upload_video
 from analyzer import get_viral_clips
 from editor import render_clips
-
 
 app = Flask(__name__)
 
@@ -11,38 +10,42 @@ app = Flask(__name__)
 def index():
     return render_template('index.html')
 
-
 @app.route('/process', methods=['POST'])
 def process():
-    data = request.json
-    youtube_url = data.get('url')
+    if 'video_file' not in request.files:
+        return jsonify({"error": "No file part found in the request."}), 400
 
-    if not youtube_url:
-        return jsonify({"error": "No URL provided"}), 400
+    video = request.files['video_file']
+
+    if video.filename == '':
+        return jsonify({"error": "No file selected."}), 400
+
+    # Save the file locally
+    file_path = "downloaded_podcast.mp4"
+    video.save(file_path)
+    print("DEBUG: Video successfully uploaded and saved locally.", flush=True)
 
     try:
-        print(f"Executing Pipeline for: {youtube_url}")
+        # Step 1: Ingestion
+        print("DEBUG: Uploading to Gemini...", flush=True)
+        gemini_video = upload_video(file_path)
+        if not gemini_video:
+            return jsonify({"error": "Failed to upload video to Gemini."}), 500
 
-        downloaded_file = download_video(youtube_url)
-        print("1. Download Complete.")
+        # Step 2: Analysis
+        print("DEBUG: Analyzing video for viral moments...", flush=True)
+        json_result = get_viral_clips(gemini_video)
 
-        uploaded_file = upload_video(downloaded_file)
-        if uploaded_file is None:
-            return jsonify({"error": "Failed to upload video to Gemini"}), 500
-        print("2. Gemini Ingestion Complete.")
+        # Step 3: Editing
+        print("DEBUG: Rendering final clips...", flush=True)
+        render_clips(file_path, json_result)
 
-        ai_json_data = get_viral_clips(uploaded_file)
-        print("3. Multimodal Analysis Complete.")
-
-        render_clips(downloaded_file, ai_json_data)
-        print("4. Local Rendering Complete.")
-
-        return jsonify({"status": "success", "message": "Clips physically rendered to your project folder!"}), 200
+        return jsonify({"message": "Clips successfully analyzed and rendered!"}), 200
 
     except Exception as e:
-        print(f"PIPELINE FAILURE: {str(e)}")
+        print(f"DEBUG: Pipeline crashed: {e}", flush=True)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
