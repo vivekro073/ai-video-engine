@@ -36,7 +36,6 @@ def download_video(youtube_url):
         'extractor_args': {
             'youtube': ['player_client=android']
         },
-        'impersonate': 'chrome'  # The TLS impersonation flag
     }
 
     # 3. Execute the download
