@@ -3,15 +3,7 @@ from youtube_fetcher import download_video
 from ingestion import upload_video
 from analyzer import get_viral_clips
 from editor import render_clips
-import os
 
-if "YOUTUBE_COOKIES" in os.environ:
-    with open("cookies.txt", "w") as f:
-        f.write(os.environ["YOUTUBE_COOKIES"])
-
-    print("DEBUG: Cookie file successfully written to server.", flush=True)
-else:
-    print("DEBUG: CRITICAL ERROR - YOUTUBE_COOKIES secret not found in environment!", flush=True)
 
 app = Flask(__name__)
 
