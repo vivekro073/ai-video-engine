@@ -36,6 +36,7 @@ def download_video(youtube_url):
         'extractor_args': {
             'youtube': ['player_client=android']
         },
+        'impersonate': 'chrome110'  # <-- THE FIX: Added the exact version number
     }
 
     # 3. Execute the download
